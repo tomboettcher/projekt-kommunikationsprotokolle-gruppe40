@@ -1,1 +1,149 @@
+#include <Wire.h>
+#include <Arduino.h>
 
+//Defines 
+#define Led_Rot   2          // Port CN9_D2        (Tom)
+#define Led_Gruen 3          // Port CN9_D3        (Tom)
+#define Led_Gelb  2          // Port CN9_D2        (Chris)
+#define Led_Blau  3          // Port CN9_D3        (Chris)
+#define Slave_address_2 0x04 // Adresse für Master
+#define Monitor_Speed 115200 
+#define Delay_Speed 500      // Durchlaufgeschwindigkeit 
+
+
+// Variable für den LED-Zustand
+volatile bool LED_Gelb_State = false;
+volatile bool LED_Blau_State = false; 
+
+void loop() 
+{
+  // Hauptloop kann leer bleiben, da die Kommunikation über Interrupts gehandhabt wird
+  delay(Delay_Speed);
+}
+
+void setup() 
+{
+  pinMode(Led_Gelb, OUTPUT);
+  pinMode(Led_Blau, OUTPUT);
+
+  // Arduino als Slave mit Adresse 0x04 initialisieren
+  Wire.begin(Slave_address_2);       // Adresse Selbst festlegen
+
+  // Register-Event wenn Daten entfangen werden
+  Wire.onReceive(receiveEvent);
+
+  // Register-Event wenn Daten angefordert werden
+  Wire.onRequest(sendEvent);
+
+  Serial.begin(Monitor_Speed);
+
+  delay (5000);
+  Serial.println("SLAVE 2, ADRESSE: 0x04, Gruppe: 40");
+}
+
+
+// Diese Funktion wird aufgerufen, wenn Daten empfangen werden
+void receiveEvent(int howMany) 
+{
+    while (Wire.available()) 
+    {
+        char c = Wire.read();
+        Serial.print("I2C: SLAVE 2 Receive -> ");
+        Serial.print("Empfangene Daten: ");
+        Serial.println(c);
+        bool commandProcessed = false;
+
+        switch(c) 
+        {
+            case 0b00000001:
+                digitalWrite(Led_Gelb, HIGH);
+                LED_Gelb_State = true;
+                commandProcessed = true;
+                digitalWrite(Led_Blau, LOW);
+                LED_Blau_State = false;
+                commandProcessed = true;
+                break;
+            case 0b00000000:
+                digitalWrite(Led_Gelb, LOW);
+                LED_Gelb_State = false;
+                commandProcessed = true;
+                digitalWrite(Led_Blau, LOW);
+                LED_Blau_State = false;
+                commandProcessed = true;
+                break;
+            case 0b00000010:
+                digitalWrite(Led_Blau, HIGH);
+                LED_Blau_State = true;
+                commandProcessed = true;
+                digitalWrite(Led_Gelb, LOW);
+                LED_Gelb_State = false;
+                commandProcessed = true;
+                break;
+            case 0b00000011:
+                digitalWrite(Led_Gelb, HIGH);
+                LED_Gelb_State = true;
+                commandProcessed = true;
+                digitalWrite(Led_Blau, HIGH);
+                LED_Blau_State = true;
+                commandProcessed = true;
+                break;
+        }
+
+        if (!commandProcessed) 
+        {
+            Serial.println("SYSTEM: ");
+            Serial.println("Unbekannter Befehl empfangen.");
+        }
+    }
+}
+
+
+// Diese Funktion wird aufgerufen, wenn Daten angefordert werden
+void sendEvent() 
+{
+    // Sendet den Zustand der LEDs an den Master und zeigt ihn auf dem Serial Monitor an
+    uint16_t dataToSend = 0;
+    // LED Gelb HIGH & LED Blau LOW
+    if (digitalRead (Led_Gelb) == HIGH && digitalRead (Led_Blau) == LOW) 
+    {
+        dataToSend = 0b00000001;
+        Serial.println("LED: ");                             
+        Serial.println("LED Gelb ist EIN & LED Blau ist AUS.");
+    }
+    // LED Gelb HIGH & LED Blau HIGH 
+    if (digitalRead (Led_Gelb) == HIGH && digitalRead (Led_Blau) == HIGH) 
+    {
+        dataToSend = 0b00000011;
+        Serial.println("LED: ");                              
+        Serial.println("LED Gelb & LED Blau ist EIN.");
+    }
+    // LED Gelb LOW & LED Blau HIGH
+    if (digitalRead (Led_Gelb) == LOW && digitalRead (Led_Blau) == HIGH)
+    {
+        dataToSend = 0b00000010;
+        Serial.println("LED: "); 
+        Serial.println("LED Gelb ist AUS & LED Blau ist EIN.");
+    }
+    // LED Gelb LOW & LED Blau LOW
+    else
+    {
+        dataToSend = 0b00000000;
+        Serial.println("LED: "); 
+        Serial.println("LED Gelb & LED Blau ist AUS.");
+    }
+    Wire.write(dataToSend);
+}
+
+void SysCheck()
+{
+    if ((LED_Gelb_State ==  digitalRead (Led_Gelb)) && (LED_Blau_State == digitalRead (Led_Blau)))
+    {
+        Serial.println("SYSTEM: ");
+        Serial.println("System IO");
+    }
+    else
+    {
+        Serial.println("SYSTEM: ");
+        Serial.println("System ERROR");
+    }
+}
