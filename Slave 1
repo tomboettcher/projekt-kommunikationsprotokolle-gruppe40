@@ -1,0 +1,138 @@
+#include <Wire.h>
+#include <Arduino.h>
+
+//Defines 
+#define Led_Rot   PD_2 // Port D        (Tom)
+#define Led_Gruen PD_3 // Port D       (Tom)
+#define Led_Gelb  PD_2 // Port D        (Chris)
+#define Led_Blau  PD_3 // Port D      (Chris)
+#define Slave_Address 0x05
+#define Monitor_Speed 115200
+#define Delay 500
+
+ 
+
+
+// Variable für den LED-Zustand
+volatile bool LED_Rot_State = false;
+volatile bool LED_Gruen_State = false; 
+
+void loop() 
+{
+  // Hauptloop kann leer bleiben, da die Kommunikation über Interrupts gehandhabt wird
+  delay(Delay);
+}
+
+
+void setup() 
+{
+  pinMode(Led_Rot, OUTPUT);
+  pinMode(Led_Gruen, OUTPUT);
+
+  // Arduino als Slave mit Adresse 0x05 initialisieren
+  Wire.begin(Slave_Address);       // Adresse Selbst festlegen
+
+  // Register-Event wenn Daten entfangen werden
+  Wire.onReceive(receiveEvent);
+
+  // Register-Event wenn Daten angefordert werden
+  Wire.onRequest(sendEvent);
+
+  Serial.begin(Monitor_Speed);
+ 
+ 
+  delay (5000);
+  Serial.println("SLAVE 1, ADDRESSE: 0x05, Gruppe: 40");
+}
+
+
+// Diese Funktion wird aufgerufen, wenn Daten empfangen werden
+void receiveEvent (int howMany) 
+{
+    while (Wire.available()) 
+    {
+        char c = Wire.read();
+        Serial.print("I2C: Slave Recive -> Empfangene Daten: ");
+        Serial.println(c);
+        bool commandProcessed = false;
+
+        switch(c) 
+        {
+            case '0b00000001':
+                digitalWrite(Led_Rot, HIGH);
+                digitalWrite(Led_Gruen, LOW);
+                LED_Rot_State = true;
+                LED_Gruen_State = false;
+                commandProcessed = true;
+                break;
+            case '0b00000000':
+                digitalWrite(Led_Rot, LOW);
+                digitalWrite(Led_Gruen, LOW);
+                LED_Rot_State = false;
+                LED_Gruen_State = false;
+                commandProcessed = true;
+                break;
+            case '0b00000010':
+                digitalWrite(Led_Gruen, HIGH);
+                digitalWrite(Led_Rot, LOW);
+                LED_Gruen_State = true;
+                LED_Rot_State = false;
+                commandProcessed = true;
+                break;
+            case '0b00000011':
+                digitalWrite(Led_Gruen, HIGH);
+                digitalWrite(Led_Rot, HIGH);
+                LED_Gruen_State = true;
+                LED_Rot_State = true;
+                commandProcessed = true;
+                break;
+        }
+
+        if (!commandProcessed) 
+        {
+            Serial.println("System: Unbekannter Befehl empfangen.");
+        }
+    }
+}
+
+
+// Diese Funktion wird aufgerufen, wenn Daten angefordert werden
+void sendEvent() 
+{
+    // Sendet den Zustand der LEDs an den Master und zeigt ihn auf dem Serial Monitor an
+    uint16_t dataToSend = 0;
+    if (digitalRead (Led_Rot) == HIGH && digitalRead (Led_Gruen) == LOW) 
+    {
+        dataToSend = 0b00000001;                            
+        Serial.println("LED: LED Rot ist Ein LED Gruen ist Aus ");
+    } 
+    if (digitalRead (Led_Rot) == HIGH && digitalRead (Led_Gruen) == LOW)
+    {
+        dataToSend = 0b00000010;                            
+        Serial.println("LED: LED Rot ist Aus & LED Gruen Ein");
+    }
+    if  (digitalRead (Led_Rot) == HIGH && digitalRead (Led_Gruen) == HIGH)
+    {
+        dataToSend = 0b00000011;                           
+        Serial.println("LED: LED Rot ist Ein & LED Gruen Ein");
+    } 
+    else 
+    {
+      Serial.println("LED: LED Rot ist Aus & LED Gruen Aus");  
+    }
+    Wire.write(dataToSend);
+}
+
+void SysCheck()
+{
+    if ((LED_Rot_State ==  digitalRead (Led_Rot)) && (LED_Gruen_State ==  digitalRead (Led_Gruen)))
+    {
+        Serial.println("SYSTEM: ");
+        Serial.println("System IO");
+    }
+    else
+    {
+        Serial.println("SYSTEM: ");
+        Serial.println("System ERROR");
+    }
+}
