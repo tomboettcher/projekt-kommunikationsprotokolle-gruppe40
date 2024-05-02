@@ -1,6 +1,6 @@
 # projekt-kommunikationsprotokolle-gruppe40
 Benötigte Bauteile:
-Zum Aufbau der Schaltung werden 3 STM 32 benötigt (1 mal Master, 2 mal Slave), 4 Schalter zum Schalten der Lampen, 4 Lampen (Rot, Grün, Blau und Gelb), 3 Pullup Wiederstände (10 KΩ), Vorwiederstände für die Lampen 	         (320Ω), 
+Zum Aufbau der Schaltung werden 3 STM 32 benötigt (1 mal Master, 2 mal Slave), 6 Taster (4 zum Schalten der Lampen und 2 für den Send request) , 4 Lampen (Rot, Grün, Blau und Gelb), 6 Pullup Wiederstände (10 KΩ), 4 Vorwiederstände für die Lampen (320Ω), 
 
 Aufbau:
 Zum Aufbau der Schaltung müssen die I2C Schnittstelle (SDA und SCL) des Masters mit den I2C Schnittstellen der beiden Slaves  verbunden werden. Diese beiden Verbindungen müssen noch über einen 10 kΩ mit 5V verbunden werden. Die Schalter werden an den Master angeschlossen wobei die Anschlüsse dem Schaltplan zu entnehmen sind. Die Lampen werden mit den Vorwiederständen an den Slaves angeschlossen wobei die Anschlüsse wieder dem Schaltplan zu entnehmen sind. 
