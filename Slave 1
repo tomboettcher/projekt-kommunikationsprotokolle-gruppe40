@@ -58,35 +58,40 @@ void receiveEvent (int howMany)
 
         switch(c) 
         {
-            case '0b00000001':
-                digitalWrite(Led_Rot, HIGH);
-                digitalWrite(Led_Gruen, LOW);
+              case 0b00000001:
+                digitalWrite(Led_Gelb, HIGH);
                 LED_Rot_State = true;
+                commandProcessed = true;
+                digitalWrite(Led_Blau, LOW);
                 LED_Gruen_State = false;
                 commandProcessed = true;
                 break;
-            case '0b00000000':
-                digitalWrite(Led_Rot, LOW);
-                digitalWrite(Led_Gruen, LOW);
+            case 0b00000000:
+                digitalWrite(Led_Gelb, LOW);
                 LED_Rot_State = false;
+                commandProcessed = true;
+                digitalWrite(Led_Blau, LOW);
                 LED_Gruen_State = false;
                 commandProcessed = true;
                 break;
-            case '0b00000010':
-                digitalWrite(Led_Gruen, HIGH);
-                digitalWrite(Led_Rot, LOW);
+            case 0b00000010:
+                digitalWrite(Led_Blau, HIGH);
                 LED_Gruen_State = true;
+                commandProcessed = true;
+                digitalWrite(Led_Gelb, LOW);
                 LED_Rot_State = false;
                 commandProcessed = true;
                 break;
-            case '0b00000011':
-                digitalWrite(Led_Gruen, HIGH);
-                digitalWrite(Led_Rot, HIGH);
-                LED_Gruen_State = true;
+            case 0b00000011:
+                digitalWrite(Led_Gelb, HIGH);
                 LED_Rot_State = true;
+                commandProcessed = true;
+                digitalWrite(Led_Blau, HIGH);
+                LED_Gruen_State = true;
                 commandProcessed = true;
                 break;
         }
+           
 
         if (!commandProcessed) 
         {
@@ -106,7 +111,7 @@ void sendEvent()
         dataToSend = 0b00000001;                            
         Serial.println("LED: LED Rot ist Ein LED Gruen ist Aus ");
     } 
-    if (digitalRead (Led_Rot) == HIGH && digitalRead (Led_Gruen) == LOW)
+    if (digitalRead (Led_Rot) == LOW && digitalRead (Led_Gruen) == HIGH)
     {
         dataToSend = 0b00000010;                            
         Serial.println("LED: LED Rot ist Aus & LED Gruen Ein");
@@ -136,3 +141,4 @@ void SysCheck()
         Serial.println("System ERROR");
     }
 }
+
